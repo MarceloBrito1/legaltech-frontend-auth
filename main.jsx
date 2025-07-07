@@ -1,55 +1,67 @@
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom/client';
+
+const ProcessoDetalhes = ({ processo }) => (
+  <div className="painel">
+    <h2>Processo: {processo.numero}</h2>
+
+    <div className="bloco">
+      <h3>📌 Andamentos</h3>
+      <ul>{processo.andamentos.map((a, i) => <li key={i}><strong>{a.data}</strong>: {a.descricao}</li>)}</ul>
+    </div>
+
+    <div className="bloco">
+      <h3>📢 Intimações</h3>
+      <ul>{processo.intimacoes.map((i, j) => <li key={j}><strong>{i.data}</strong>: {i.descricao}</li>)}</ul>
+    </div>
+
+    <div className="bloco">
+      <h3>📎 Documentos</h3>
+      <ul>{processo.documentos.map((d, k) => <li key={k}>{d.nome}</li>)}</ul>
+    </div>
+  </div>
+);
 
 const App = () => {
   const [numero, setNumero] = useState('');
-  const [dados, setDados] = useState(null);
+  const [processo, setProcesso] = useState(null);
   const [erro, setErro] = useState('');
 
   const buscarProcesso = async () => {
     try {
       setErro('');
-      const response = await fetch(`https://legaltech-backend-mock.onrender.com/processos/${encodeURIComponent(numero)}`, {
+      const resp = await fetch(\`https://legaltech-backend-mock.onrender.com/processos/\${encodeURIComponent(numero)}\`, {
         headers: {
           'Authorization': 'Basic ' + btoa('admin:senha123')
         }
       });
-      if (!response.ok) throw new Error(await response.text());
-      const json = await response.json();
-      setDados(json);
+      if (!resp.ok) throw new Error(await resp.text());
+      const json = await resp.json();
+      setProcesso(json);
     } catch (err) {
       setErro(err.message);
-      setDados(null);
+      setProcesso(null);
     }
   };
 
   return (
-    <div style={{ fontFamily: 'Arial', padding: 24 }}>
-      <h1>Consulta de Processo</h1>
-      <input
-        placeholder="Digite o número do processo"
-        value={numero}
-        onChange={(e) => setNumero(e.target.value)}
-        style={{ width: 320, padding: 8 }}
-      />
-      <button onClick={buscarProcesso} style={{ marginLeft: 12, padding: 8 }}>Buscar</button>
+    <div className="container">
+      <aside className="menu">
+        <h1>📁 Banca de Processos</h1>
+        <input
+          type="text"
+          placeholder="Número do processo"
+          value={numero}
+          onChange={(e) => setNumero(e.target.value)}
+        />
+        <button onClick={buscarProcesso}>Buscar</button>
+        {erro && <p className="erro">Erro: {erro}</p>}
+      </aside>
 
-      {erro && <p style={{ color: 'red' }}>Erro: {erro}</p>}
-
-      {dados && (
-        <div style={{ marginTop: 24 }}>
-          <h2>Processo {dados.numero}</h2>
-
-          <h3>Andamentos</h3>
-          <ul>{dados.andamentos.map((a, i) => <li key={i}>{a.data}: {a.descricao}</li>)}</ul>
-
-          <h3>Intimações</h3>
-          <ul>{dados.intimacoes.map((i, j) => <li key={j}>{i.data}: {i.descricao}</li>)}</ul>
-
-          <h3>Documentos</h3>
-          <ul>{dados.documentos.map((d, k) => <li key={k}>{d.nome}</li>)}</ul>
-        </div>
-      )}
+      <main className="conteudo">
+        {processo ? <ProcessoDetalhes processo={processo} /> : <p className="placeholder">Digite um número de processo e clique em "Buscar".</p>}
+      </main>
     </div>
   );
 };
